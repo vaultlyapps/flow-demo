@@ -549,6 +549,17 @@ html.big-text body{zoom:1.12}
 .guide-item{display:flex;gap:14px;align-items:flex-start;padding:10px 0;break-inside:avoid}
 .guide-item p{margin:2px 0 0;font-size:14px}
 .guide-item .stone-ico{background:var(--primary-soft)}
+/* Printed guide: a one-page handout — two columns of small tiles, nothing split across a page */
+@media print{
+  body[data-view="guide"] .topbar .sub{display:block;margin-top:2px;font-size:12px}
+  .card.guide{border:0;padding:0;break-inside:auto}
+  .guide-list{grid-template-columns:1fr 1fr;gap:8px}
+  .guide-item{gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface-2);break-inside:avoid}
+  .guide-item:last-child:nth-child(odd){grid-column:1/-1}
+  .guide-item .stone-ico{width:30px;height:30px;font-size:15px;background:#fff;box-shadow:none}
+  .guide-item b{font-size:12.5px;color:var(--text)}
+  .guide-item p{font-size:10.5px;line-height:1.45;color:var(--text)}
+}
 
 /* ============ ACCENT COLOURS (the default is sage) ============ */
 [data-accent="lagoon"]{--primary:#3E7C96;--primary-strong:#2F6379;--primary-soft:#DCEAF0;--good:#35708A;--good-soft:#DCEAF0;--income:#3E7C96}
@@ -913,7 +924,13 @@ function commit(msg, fn, opts = {}) {
   refreshStreaks();
   save();
   render();
-  if (msg) toast(msg, opts.undo === false ? null : () => { S = migrate(JSON.parse(before)); refreshStreaks(); save(); render(); toast('Undone'); });
+  if (msg) toast(msg, opts.undo === false ? null : () => {
+    const undone = JSON.stringify(S);
+    S = migrate(JSON.parse(before));
+    // Linked devices already have the change, so the undo has to travel as a change of its own.
+    if (typeof linkActive === 'function' && linkActive()) stampSyncChanges(undone);
+    refreshStreaks(); save(); render(); toast('Undone');
+  });
   if (stones.length && stones.length < 3) setTimeout(() => toast(`🪨 Stepping stone laid — ${stones[0]}`), 700);
   return r;
 }
@@ -3056,6 +3073,8 @@ const SYNC_LABELS = {
   checks: ['balance check', 'balance checks'], expected: ['expected payment', 'expected payments'], favs: ['one-tap button', 'one-tap buttons'], wishes: ['paused buy', 'paused buys'], challenges: ['challenge', 'challenges'],
   planDays: ['day plan', 'day plans'], notes: ['note', 'notes'], milestones: ['stepping stone', 'stepping stones']
 };
+/* Settings that change what the numbers mean. Linked devices keep these the same; look and feel stays per device. */
+const PREF_KEYS = ['currency', 'paycheckFrequency', 'buffer', 'goalsInBalance', 'radarIgnore', 'debtStrategy', 'userName'];
 const syncLabel = (k, n) => `${n} ${(SYNC_LABELS[k] || [k, k])[n === 1 ? 0 : 1]}`;
 
 /* Monotonic ISO timestamps: two stamps in the same millisecond still order correctly. */
@@ -3142,6 +3161,7 @@ function stampSyncChanges(beforeStr) {
     for (const c of new Set([...Object.keys(x), ...Object.keys(y)])) if (x[c] !== y[c]) S.sync.budgetCells[cellKey(ym, c)] = now;
   }
   purgeOrphanCells(S);
+  if (before.settings && PREF_KEYS.some(k => JSON.stringify(before.settings[k]) !== JSON.stringify(S.settings[k]))) S.settings.prefsAt = now;
 }
 
 /* ---------- Unicode-safe, chunked base64 ---------- */
@@ -4861,7 +4881,7 @@ const GUIDE = [
   ['🧩', 'Challenges and stepping stones', 'Savings challenges are boards of tiles you fill at your own pace. Stepping stones mark what you have actually done — once laid, a stone stays, whatever next week looks like.'],
   ['💚', 'Money dates', 'Five calm minutes once a week: glance at Safe to spend, sort anything uncategorized, pick one small intention.'],
   ['🎯', 'Focus mode', 'Too much today? Focus hides everything except Safe to spend, logging and today’s list. “Show fewer pages” at the bottom of the menu keeps the menu short.'],
-  ['💾', 'Your data', 'Everything is saved on this device, in this browser. Export a backup now and then from Settings, and use Sync devices to carry changes between your phone and laptop.']
+  ['💾', 'Your data', 'Everything is saved on this device, in this browser. Export a backup now and then from Settings. Settings is also where you keep your phone and laptop the same.']
 ];
 VIEWS.guide = {
   title: 'How Flow works', icon: '📖', pin: true,
