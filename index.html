@@ -2718,7 +2718,12 @@ function demoState() {
   const BILL_CATS = ['Rent & home', 'Phone & internet'];
   st.categories.forEach(c => { if (defaults[c.name]) c.budgetMonthly = defaults[c.name]; });
   const now = today(), cur = curYM(), start = addMonthsYM(cur, -2) + '-01';
-  const at = (date, h) => { const d = parseD(date); d.setHours(h == null ? between(8, 21) : h, between(0, 59)); return d.toISOString(); };
+  // Never later than this moment: an entry "logged" in the future would look like it came after a balance check
+  // made now, and be taken off the checked balance a second time. Today's later entries move into the past hour or two.
+  let early = 0;
+  const at = (date, h) => { const d = parseD(date); d.setHours(h == null ? between(8, 21) : h, between(0, 59));
+    if (d.getTime() > Date.now()) return new Date(Date.now() - (++early * 23 + between(5, 15)) * 60000).toISOString();
+    return d.toISOString(); };
   const T = (date, type, amount, catName, note, extra = {}) => {
     if (date > now || date < start) return null;
     const t = { id: uid() + st.transactions.length, type, amount, category: extra.cat || C(catName), date, note, recurringId: extra.rid || null, loggedAt: extra.loggedAt || at(date) };
