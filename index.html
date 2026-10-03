@@ -4891,9 +4891,9 @@ VIEWS.guide = {
     <div class="row no-print" style="margin-top:8px">${btn('⌨️ Keyboard shortcuts', 'shortcuts', 'secondary')}</div></section>`
 };
 
-/* ---------- Accent colours (Settings → Preferences) ---------- */
+/* ---------- Accent colors (Settings → Preferences) ---------- */
 const ACCENTS = [['sage', 'Sage', '#5B8C5A'], ['lagoon', 'Lagoon', '#3E7C96'], ['plum', 'Plum', '#7A5C99'], ['clay', 'Clay', '#A8673B']];
-const accentPickerHTML = () => `<div class="field"><span>Colour</span><div class="swatches">${ACCENTS.map(([id, name, hex]) => `<label class="swatch" style="--sw:${hex}" title="${name}"><input type="radio" name="accent" value="${id}" data-on="setting" ${(S.settings.accent || 'sage') === id ? 'checked' : ''}><span aria-label="${name}"></span></label>`).join('')}</div></div>`;
+const accentPickerHTML = () => `<div class="field"><span>Color</span><div class="swatches">${ACCENTS.map(([id, name, hex]) => `<label class="swatch" style="--sw:${hex}" title="${name}"><input type="radio" name="accent" value="${id}" data-on="setting" ${(S.settings.accent || 'sage') === id ? 'checked' : ''}><span aria-label="${name}"></span></label>`).join('')}</div></div>`;
 
 /* =====================================================================
    DEMO BUILD ONLY — entry cap and buy button. No banner: the demo looks like the real planner.
